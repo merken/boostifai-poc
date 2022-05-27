@@ -21,13 +21,15 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.9'
-
+          
       - name: Create and start virtual environment
+        working-directory: ./api
         run: |
           python -m venv venv
           source venv/bin/activate
       
       - name: Install dependencies
+        working-directory: ./api
         run: pip install -r requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
@@ -36,6 +38,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: python-app
+          working-directory: ./api
           path: |
             . 
             !venv/
