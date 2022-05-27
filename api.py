@@ -1,13 +1,13 @@
-# import base64
-# from datetime import datetime
-# import os
-# import random
-# import string
+import base64
+from datetime import datetime
+import os
+import random
+import string
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 # import matplotlib
 # from top2vec import Top2Vec
 # from bertopic import BERTopic
-# from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient
 
 app = Flask(__name__)
 
