@@ -177,7 +177,7 @@ def uploadToBlobStorage(connection_string, blob_name, file_path):
 
 print('Uploading files to azure storage')
 uploadToBlobStorage(storage_connection_string, bertopic_model_name, bertopic_model_name)
-uploadToBlobStorage(storage_connection_string, top2vec_mdel_name, top2vec_mdel_name)
+uploadToBlobStorage(storage_connection_string, top2vec_model_name, top2vec_model_name)
 uploadToBlobStorage(storage_connection_string, corpus_name, corpus_name)
 
 print('program done!')

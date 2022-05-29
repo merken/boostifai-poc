@@ -1,5 +1,0 @@
-top2vec==1.0.26
-bertopic==0.9.4
-Flask==2.0.2
-matplotlib==3.5.2
-azure-storage-blob==12.12.0
