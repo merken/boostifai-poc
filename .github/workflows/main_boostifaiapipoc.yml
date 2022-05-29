@@ -21,15 +21,24 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: "Delete existing container"
+      - name: "Stop existing container"
         uses: azure/CLI@v1
         with:
           azcliversion: 2.30.0
           inlineScript: |
-            az acr repository delete --name boostifaiapi:latest
+            az container stop --name aci-boostifaiapi --resource-group boostifai
+
+      - name: "Delete existing image"
+        uses: azure/CLI@v1
+        if: always()
+        with:
+          azcliversion: 2.30.0
+          inlineScript: |
+            az acr repository delete -n boostifaipoc --image boostifaiapi:latest --yes
 
       - name: "Build and push image"
         uses: azure/docker-login@v1
+        if: always()
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           username: ${{ secrets.REGISTRY_USERNAME }}
@@ -37,15 +46,15 @@ jobs:
 
       - run: |
           cd ./api
-          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:${{ github.sha }}
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:${{ github.sha }}
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
 
       - name: "Deploy to Azure Container Instances"
         uses: "azure/aci-deploy@v1"
         with:
           resource-group: ${{ secrets.RESOURCE_GROUP }}
           dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:${{ github.sha }}
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
           registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ secrets.REGISTRY_USERNAME }}
           registry-password: ${{ secrets.REGISTRY_PASSWORD }}
