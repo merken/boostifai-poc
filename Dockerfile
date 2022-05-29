@@ -1,7 +1,7 @@
 FROM python:3.9.12
 ARG root_url
 ARG site_url
-ARG storage_connection_string
+ARG STORAGE_CONNECTION_STRING
 # Update base packages
 RUN apt-get update
 RUN apt-get upgrade -y

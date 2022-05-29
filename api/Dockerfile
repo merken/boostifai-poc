@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9.12
 
 ENV FLASK_APP api
 ENV STORAGE_CONNECTION_STRING ''
@@ -13,4 +13,4 @@ COPY ./templates ./templates
 
 COPY api.py api.py
 
-CMD [ "python3", "-u", "-m" , "gunicorn", "run", "--host=0.0.0.0"]
+CMD [ "python3", "-u", "-m" , "gunicorn", "--bind=0.0.0.0:80", "startup:app"]
