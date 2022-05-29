@@ -1,3 +1,4 @@
+import os
 import time
 from bs4 import BeautifulSoup
 from top2vec import Top2Vec
@@ -16,18 +17,13 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 import re
 import nltk
-import argparse
 from azure.storage.blob import BlobServiceClient
 
-parser = argparse.ArgumentParser(description='Optional app description')
-parser.add_argument('root_url', type=str)
-parser.add_argument('site_url', type=str)
-parser.add_argument('storage_connection_string', type=str)
-args = parser.parse_args()
 
-root_url = args.root_url
-site_url = args.root_url
-storage_connection_string = args.storage_connection_string
+root_url = os.environ.get('ROOT_URL')
+site_url = os.environ.get('SITE_URL')
+storage_connection_string = os.environ.get('STORAGE_CONNECTION_STRING')
+
 
 def scrollPageAndGetSource(pageUrl):
     options = Options()
@@ -77,6 +73,7 @@ def findAllInternalLinks(root, page_source):
         internal_links.append(href)
     return internal_links
 
+
 print(f"Starting {root_url} {site_url}")
 
 all_content: list[str] = []
@@ -95,14 +92,21 @@ for internal_link in unique_links:
     print(f'{count}')
 
 print('Cleaning data...')
+
+
 def removeNone(x):
     if not (x is None):
         return x
+
+
 def removeStopWords(x):
     if x not in stopwords:
         return x
+
+
 # first lowercase and remove punctuation
 data = []
+file_name = site_url.replace('https://', '').replace('/', '')
 
 stopwords = set(nltk.corpus.stopwords.words('dutch'))
 stopwords.add('None')
@@ -155,7 +159,6 @@ bertopic_model = BERTopic(
 topics, probs = bertopic_model.fit_transform(corpus*10)
 print('Fitting Done!')
 
-file_name = site_url.replace('https://', '').replace('/', '')
 bertopic_model_name = f"{file_name}.bertopic.model"
 bertopic_model.save(bertopic_model_name)
 
@@ -167,6 +170,7 @@ print('Fitting Done!')
 top2vec_model_name = f"{file_name}.top2vec.model"
 top2Vec_model.save(top2vec_model_name)
 
+
 def uploadToBlobStorage(connection_string, blob_name, file_path):
     blob_service_client = BlobServiceClient.from_connection_string(
         connection_string)
@@ -175,9 +179,12 @@ def uploadToBlobStorage(connection_string, blob_name, file_path):
     with open(file_path, "rb") as data:
         blob_client.upload_blob(data)
 
+
 print('Uploading files to azure storage')
-uploadToBlobStorage(storage_connection_string, bertopic_model_name, bertopic_model_name)
-uploadToBlobStorage(storage_connection_string, top2vec_model_name, top2vec_model_name)
+# uploadToBlobStorage(storage_connection_string,
+#                     bertopic_model_name, bertopic_model_name)
+uploadToBlobStorage(storage_connection_string,
+                    top2vec_model_name, top2vec_model_name)
 uploadToBlobStorage(storage_connection_string, corpus_name, corpus_name)
 
 print('program done!')
