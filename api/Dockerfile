@@ -12,6 +12,7 @@ COPY ./static ./static
 COPY ./templates ./templates
 
 COPY api.py api.py
+COPY startup.py startup.py
 
 EXPOSE 80
 
