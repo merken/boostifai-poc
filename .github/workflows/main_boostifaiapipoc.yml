@@ -22,13 +22,6 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: "Stop existing container"
-        uses: azure/CLI@v1
-        with:
-          azcliversion: 2.30.0
-          inlineScript: |
-            az container stop --name aci-boostifaiapi --resource-group boostifai
-
       - name: "Delete existing image"
         uses: azure/CLI@v1
         if: always()
@@ -52,27 +45,27 @@ jobs:
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build
 
-    steps:
-      - name: "Login via Azure CLI"
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #   steps:
+  #     - name: "Login via Azure CLI"
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: "Deploy to Azure Container Instances"
-        if: always()
-        uses: "azure/aci-deploy@v1"
-        with:
-          resource-group: ${{ secrets.RESOURCE_GROUP }}
-          dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
-          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          registry-username: ${{ secrets.REGISTRY_USERNAME }}
-          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          name: aci-boostifaiapi
-          location: "west europe"
-          environment-variables: STORAGE_CONNECTION_STRING=secrets.STORAGE_CONNECTION_STRING
-          ports: 80
+  #     - name: "Deploy to Azure Container Instances"
+  #       if: always()
+  #       uses: "azure/aci-deploy@v1"
+  #       with:
+  #         resource-group: ${{ secrets.RESOURCE_GROUP }}
+  #         dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}
+  #         image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/boostifaiapi:latest
+  #         registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+  #         registry-username: ${{ secrets.REGISTRY_USERNAME }}
+  #         registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+  #         name: aci-boostifaiapi
+  #         location: "west europe"
+  #         environment-variables: STORAGE_CONNECTION_STRING=secrets.STORAGE_CONNECTION_STRING
+  #         ports: 80

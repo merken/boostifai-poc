@@ -13,4 +13,6 @@ COPY ./templates ./templates
 
 COPY api.py api.py
 
+EXPOSE 80
+
 CMD [ "python3", "-u", "-m" , "gunicorn", "--bind=0.0.0.0:80", "startup:app"]
