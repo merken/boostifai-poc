@@ -14,11 +14,9 @@ from umap import UMAP
 from hdbscan import HDBSCAN
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer
-from nltk.corpus import stopwords
 import re
-import nltk
 from azure.storage.blob import BlobServiceClient
-
+import tensorflow_hub as hub
 
 root_url = os.environ.get('ROOT_URL')
 site_url = os.environ.get('SITE_URL')
@@ -32,6 +30,9 @@ def scrollPageAndGetSource(pageUrl):
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-gpu")
+
     chrome_prefs = {}
     options.experimental_options["prefs"] = chrome_prefs
     chrome_prefs["profile.default_content_settings"] = {"images": 2}
@@ -74,6 +75,25 @@ def findAllInternalLinks(root, page_source):
     return internal_links
 
 
+def uploadToBlobStorage(connection_string, blob_name, file_path):
+    blob_service_client = BlobServiceClient.from_connection_string(
+        connection_string)
+    blob_client = blob_service_client.get_blob_client(
+        container='models', blob=blob_name)
+    with open(file_path, "rb") as data:
+        blob_client.upload_blob(data)
+
+
+def removeNone(x):
+    if not (x is None):
+        return x
+
+
+def removeStopWords(x):
+    if x not in stopwords:
+        return x
+
+
 print(f"Starting {root_url} {site_url}")
 
 all_content: list[str] = []
@@ -89,27 +109,17 @@ for internal_link in unique_links:
     content = getContentFromPageSource(page_source)
     all_content.append(content)
     count = count + 1
-    print(f'{count}')
+    print(f'Page iteration: {count}')
 
 print('Cleaning data...')
-
-
-def removeNone(x):
-    if not (x is None):
-        return x
-
-
-def removeStopWords(x):
-    if x not in stopwords:
-        return x
 
 
 # first lowercase and remove punctuation
 data = []
 file_name = site_url.replace('https://', '').replace('/', '')
-
-stopwords = set(nltk.corpus.stopwords.words('dutch'))
-stopwords.add('None')
+nltk.download('stopwords')
+my_stopwords = nltk.corpus.stopwords.words('dutch') \
+    + ['None', 'http', 'https', 'amp', 'com', 'delen']
 
 for content in all_content:
     contentData = content.replace('\n', ' ').replace(
@@ -137,14 +147,10 @@ umap_model = UMAP(n_neighbors=3, n_components=3, min_dist=0.05)
 hdbscan_model = HDBSCAN(min_cluster_size=40, min_samples=40,
                         prediction_data=True, gen_min_span_tree=True)
 
-
-stopwords = list(stopwords.words('dutch')) + \
-    ['http', 'https', 'amp', 'com', 'delen']
-
 embedding_model = SentenceTransformer(
     'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
 # we add this to remove stopwords that can pollute topcs
-vectorizer_model = CountVectorizer(ngram_range=(1, 2), stop_words=stopwords)
+vectorizer_model = CountVectorizer(ngram_range=(1, 2), stop_words=my_stopwords)
 
 bertopic_model = BERTopic(
     #     umap_model=umap_model,
@@ -164,21 +170,13 @@ bertopic_model.save(bertopic_model_name)
 
 print('Top2Vec')
 # Using top2vec
+embedding_model = hub.load(
+    "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3")
 top2Vec_model = Top2Vec(
-    corpus*10, embedding_model='universal-sentence-encoder-multilingual')
+    corpus*10, embedding_model=embedding_model)
 print('Fitting Done!')
 top2vec_model_name = f"{file_name}.top2vec.model"
 top2Vec_model.save(top2vec_model_name)
-
-
-def uploadToBlobStorage(connection_string, blob_name, file_path):
-    blob_service_client = BlobServiceClient.from_connection_string(
-        connection_string)
-    blob_client = blob_service_client.get_blob_client(
-        container='models', blob=blob_name)
-    with open(file_path, "rb") as data:
-        blob_client.upload_blob(data)
-
 
 print('Uploading files to azure storage')
 # uploadToBlobStorage(storage_connection_string,

@@ -3,4 +3,5 @@ __pycache__
 *.json
 *.secrets
 *.secret
-.env
+*.env
+*.jpg
