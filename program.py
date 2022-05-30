@@ -116,7 +116,7 @@ print('Cleaning data...')
 
 # first lowercase and remove punctuation
 data = []
-file_name = site_url.replace('https://', '').replace('/', '')
+file_name = root_url.replace('https://', '').replace('/', '')
 nltk.download('stopwords')
 my_stopwords = nltk.corpus.stopwords.words('dutch') \
     + ['None', 'http', 'https', 'amp', 'com', 'delen']
@@ -179,10 +179,9 @@ top2vec_model_name = f"{file_name}.top2vec.model"
 top2Vec_model.save(top2vec_model_name)
 
 print('Uploading files to azure storage')
-# uploadToBlobStorage(storage_connection_string,
-#                     bertopic_model_name, bertopic_model_name)
 uploadToBlobStorage(storage_connection_string,
                     top2vec_model_name, top2vec_model_name)
 uploadToBlobStorage(storage_connection_string, corpus_name, corpus_name)
-
+uploadToBlobStorage(storage_connection_string,
+                    bertopic_model_name, bertopic_model_name)
 print('program done!')

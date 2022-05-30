@@ -9,7 +9,7 @@ STORAGE_CONNECTION_STRING=
 ``` 
 
 ```docker build . -t boostifai_ingestion```
-```docker run --shm-size="2g" --env-file ingestion.env boostifai_ingestion```
+```docker run --shm-size="4g" --env-file ingestion.env boostifai_ingestion```
 
 Create api.env file with contents:
 ```
