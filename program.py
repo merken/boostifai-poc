@@ -81,7 +81,7 @@ def uploadToBlobStorage(connection_string, blob_name, file_path):
     blob_client = blob_service_client.get_blob_client(
         container='models', blob=blob_name)
     with open(file_path, "rb") as data:
-        blob_client.upload_blob(data)
+        blob_client.upload_blob(data, overwrite=True)
 
 
 def removeNone(x):

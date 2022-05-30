@@ -23,6 +23,9 @@ def getBlobClient() -> BlobServiceClient:
 
 
 def downloadFileFromModels(blob_service_client: BlobServiceClient, fileName: str):
+    exists = os.path.exists(fileName)
+    if exists:
+        return
     blob_client = blob_service_client.get_blob_client(
         container='models', blob=fileName)
     with open(fileName, "wb") as download_file:
@@ -36,6 +39,17 @@ def similarWords(top2vec_model: Top2Vec, word: str) -> list[str]:
 
     for word, score in zip(words, word_scores):
         results.append(word)
+    return results
+
+
+def similarTopics(bertopic_model: BERTopic, topic: str) -> list[str]:
+    results: list[str] = []
+
+    similar_topics, similarity = bertopic_model.find_topics(topic, top_n=3)
+    for similar_topic in similar_topics:
+        topicDatas = bertopic_model.get_topic(similar_topic)
+        for topicData in topicDatas:
+            results.append(topicData[0])
     return results
 
 
@@ -79,12 +93,10 @@ def search():
     if search:
         model_name = getModelNameFromRoot()
 
-        # berttopic_model_name = f'{file_name}.bertopic.model'
         top2vec_model_name = f'{model_name}.top2vec.model'
 
         blob_service_client = getBlobClient()
 
-        # downloadFileFromModels(blob_service_client, berttopic_model_name)
         downloadFileFromModels(blob_service_client, top2vec_model_name)
 
         top2vec_model = Top2Vec.load(top2vec_model_name)
@@ -103,7 +115,7 @@ def search():
         return redirect(url_for('index'))
 
 
-@app.route('/api/v1/topics/<topic>', methods=['GET'])
+@app.route('/api/v1/similar/words/<topic>', methods=['GET'])
 def api_topics(topic: str):
     model_name = getModelNameFromRoot()
 
@@ -116,6 +128,22 @@ def api_topics(topic: str):
     top2vec_model = Top2Vec.load(top2vec_model_name)
 
     results = similarWords(top2vec_model, topic)
+    return jsonify(results)
+
+
+@app.route('/api/v1/similar/topics/<topic>', methods=['GET'])
+def api_topics_bertopic(topic: str):
+    model_name = getModelNameFromRoot()
+
+    bertopic_model_name = f'{model_name}.bertopic.model'
+
+    blob_service_client = getBlobClient()
+
+    downloadFileFromModels(blob_service_client, bertopic_model_name)
+
+    bertopic_model = BERTopic.load(bertopic_model_name)
+
+    results = similarTopics(bertopic_model, topic)
     return jsonify(results)
 
 
